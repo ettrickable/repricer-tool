@@ -34,4 +34,15 @@ for idx, row in enumerate(products):
         "Your Price": your_price,
         "Competitor A": comp_a,
         "Competitor B": comp_b,
-        "Competitor C": c
+        "Competitor C": comp_c,
+        "Lowest Competitor": lowest,
+        "Suggested Price": suggested,
+        "Price Floor (90%)": floor
+    })
+
+result_df = pd.DataFrame(updated_rows)
+st.markdown("## 📋 Final Suggested Prices")
+st.dataframe(result_df)
+
+csv = result_df.to_csv(index=False).encode('utf-8')
+st.download_button("📥 Download CSV", data=csv, file_name="repricing_suggestions.csv", mime='text/csv')
