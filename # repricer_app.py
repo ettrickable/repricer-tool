@@ -2,57 +2,51 @@ import streamlit as st
 import pandas as pd
 
 # -----------------------------
-# Sample Product Data
+# Streamlit Config & Intro
 # -----------------------------
-products = [
-    {"Product": "🖱️ Wireless Mouse", "Your Price": 24.99, "Competitor A": 30.00, "Competitor B": 40.00, "Competitor C": 40.00},
-    {"Product": "🔊 Bluetooth Speaker", "Your Price": 49.99, "Competitor A": 54.99, "Competitor B": 51.00, "Competitor C": 52.49},
-    {"Product": "🧲 USB-C Hub", "Your Price": 34.99, "Competitor A": 32.00, "Competitor B": 32.00, "Competitor C": 32.00},
-    {"Product": "💻 Laptop Stand", "Your Price": 29.99, "Competitor A": 33.00, "Competitor B": 31.49, "Competitor C": 34.89},
-    {"Product": "🎧 Noise Cancelling Headphones", "Your Price": 119.99, "Competitor A": 124.99, "Competitor B": 122.00, "Competitor C": 129.99}
-]
+st.set_page_config(page_title="Repricing Tool", layout="wide")
+st.title("💰 Smart Repricing Tool (Custom Products Enabled)")
+
+st.markdown("Add your own products below and compare to your competitors.")
 
 # -----------------------------
-# Streamlit App Config
-# -----------------------------
-st.set_page_config(page_title="Smart Repricing Tool", layout="wide")
-st.title("💰 Smart Repricing Tool (with Custom Rules)")
-
-st.markdown("Fine-tune your pricing logic below:")
-
-# -----------------------------
-# Global Adjustable Settings
+# Global Pricing Logic Controls
 # -----------------------------
 col1, col2 = st.columns(2)
 undercut_amount = col1.number_input("💸 Undercut Amount ($)", min_value=0.0, value=1.00, step=0.10)
-floor_percent = col2.slider("🛡️ Price Floor (% of your price you are happy to fall to)", min_value=50, max_value=100, value=90)
+floor_percent = col2.slider("🛡️ Price Floor (% of your price)", min_value=50, max_value=100, value=90)
 
 st.divider()
 
 # -----------------------------
-# Interactive Product Table
+# How Many Products to Add?
+# -----------------------------
+num_products = st.number_input("🛒 How many products would you like to enter?", min_value=1, max_value=20, value=5)
+
+# -----------------------------
+# Product Input Loop
 # -----------------------------
 updated_rows = []
 
-for idx, row in enumerate(products):
-    st.subheader(f"{row['Product']}")
+for i in range(int(num_products)):
+    st.subheader(f"🆕 Product #{i+1}")
     cols = st.columns(5)
 
-    your_price = cols[0].number_input("Your Price", value=row["Your Price"], key=f"yp_{idx}")
-    comp_a = cols[1].number_input("Competitor A", value=row["Competitor A"], key=f"a_{idx}")
-    comp_b = cols[2].number_input("Competitor B", value=row["Competitor B"], key=f"b_{idx}")
-    comp_c = cols[3].number_input("Competitor C", value=row["Competitor C"], key=f"c_{idx}")
+    product_name = cols[0].text_input("Product Name", key=f"name_{i}")
+    your_price = cols[1].number_input("Your Price", min_value=0.0, value=0.0, step=0.01, key=f"yp_{i}")
+    comp_a = cols[2].number_input("Competitor A", min_value=0.0, value=0.0, step=0.01, key=f"a_{i}")
+    comp_b = cols[3].number_input("Competitor B", min_value=0.0, value=0.0, step=0.01, key=f"b_{i}")
+    comp_c = cols[4].number_input("Competitor C", min_value=0.0, value=0.0, step=0.01, key=f"c_{i}")
 
-    lowest = min(comp_a, comp_b, comp_c)
+    lowest = min(comp_a, comp_b, comp_c) if any([comp_a, comp_b, comp_c]) else 0.0
     floor = round(your_price * (floor_percent / 100), 2)
-    suggested = max(round(lowest - undercut_amount, 2), floor)
+    suggested = max(round(lowest - undercut_amount, 2), floor) if lowest > 0 else 0.0
 
-    hit_floor = suggested == floor
-
+    hit_floor = suggested == floor and suggested > 0
     icon = "🔒" if hit_floor else "💡"
     color = "red" if hit_floor else "lime"
 
-    cols[4].markdown(f"""
+    st.markdown(f"""
     <div style='line-height:1.3'>
         <span style='font-size: 18px;'>{icon} <strong>Suggested:</strong> 
         <span style='color:{color};'>${suggested:.2f}</span></span><br>
@@ -61,7 +55,7 @@ for idx, row in enumerate(products):
     """, unsafe_allow_html=True)
 
     updated_rows.append({
-        "Product": row["Product"].replace("🖱️ ", "").replace("🔊 ", "").replace("🧲 ", "").replace("💻 ", "").replace("🎧 ", ""),
+        "Product": product_name or f"Product {i+1}",
         "Your Price": your_price,
         "Competitor A": comp_a,
         "Competitor B": comp_b,
@@ -74,7 +68,7 @@ for idx, row in enumerate(products):
     })
 
 # -----------------------------
-# Final Table Display + Download
+# Final Table Output
 # -----------------------------
 result_df = pd.DataFrame(updated_rows)
 st.markdown("## 📋 Final Suggested Prices")
