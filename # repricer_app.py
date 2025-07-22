@@ -1,11 +1,12 @@
 import streamlit as st
 import pandas as pd
+import io
 
 # -----------------------------
 # Streamlit Config & Intro
 # -----------------------------
 st.set_page_config(page_title="Smart Repricing Tool", layout="wide")
-st.title("💰 Smart Repricing Tool (Custom Products + Emoji Picker)")
+st.title("💰 Smart Repricing Tool (Custom Products + Excel Export)")
 
 st.markdown("Add your products below, set pricing rules, and track competitor pricing easily.")
 
@@ -42,6 +43,7 @@ emoji_options = {
 # Product Input Loop
 # -----------------------------
 updated_rows = []
+export_rows = []
 
 for i in range(int(num_products)):
     st.markdown("----")
@@ -88,12 +90,44 @@ for i in range(int(num_products)):
         "Hit Floor": hit_floor
     })
 
+    export_rows.append({
+        "Product": product_name_input.strip() or f"Product {i+1}",
+        "Your Price": your_price,
+        "Competitor A": comp_a,
+        "Competitor B": comp_b,
+        "Competitor C": comp_c,
+        "Lowest Competitor": lowest,
+        "Suggested Price": suggested,
+        "Price Floor (%)": f"{floor_percent}%",
+        "Price Floor Value": floor,
+        "Hit Floor": hit_floor
+    })
+
 # -----------------------------
-# Final Table Output
+# Final Table Display
 # -----------------------------
 st.markdown("## 📋 Final Suggested Prices")
 result_df = pd.DataFrame(updated_rows)
 st.dataframe(result_df, use_container_width=True)
 
-csv = result_df.to_csv(index=False).encode('utf-8')
-st.download_button("📥 Download CSV", data=csv, file_name="repricing_suggestions.csv", mime='text/csv')
+# -----------------------------
+# Excel Export with xlsxwriter
+# -----------------------------
+excel_df = pd.DataFrame(export_rows)
+output = io.BytesIO()
+
+with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+    excel_df.to_excel(writer, index=False, sheet_name="Prices")
+    workbook = writer.book
+    worksheet = writer.sheets["Prices"]
+    worksheet.set_column("A:A", 30)  # Product
+    worksheet.set_column("B:H", 18)  # Other columns
+
+data = output.getvalue()
+
+st.download_button(
+    label="📥 Download Excel (.xlsx)",
+    data=data,
+    file_name="repricing_suggestions.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
