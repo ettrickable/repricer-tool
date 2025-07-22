@@ -46,9 +46,9 @@ for idx, row in enumerate(products):
     suggested = max(round(lowest - undercut_amount, 2), floor)
 
     cols[4].markdown(f"""
-    **💡 Suggested:**  
-    💲**${suggested:.2f}**  
-    *(Floor: ${floor:.2f}, Undercut: ${undercut_amount:.2f})*
+    💡 Suggested:  
+    💲${suggested:.2f}  
+    (Floor: ${floor:.2f}, Undercut: ${undercut_amount:.2f})
     """)
 
     updated_rows.append({
