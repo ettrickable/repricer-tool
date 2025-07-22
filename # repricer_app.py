@@ -20,6 +20,17 @@ floor_percent = col2.slider("🛡️ Price Floor (% of your price)", min_value=5
 st.divider()
 
 # -----------------------------
+# Competitor Naming Section
+# -----------------------------
+st.markdown("### 🏷️ Competitor Names")
+ccol1, ccol2, ccol3 = st.columns(3)
+comp1_name = ccol1.text_input("Competitor 1 Label", value="Competitor A")
+comp2_name = ccol2.text_input("Competitor 2 Label", value="Competitor B")
+comp3_name = ccol3.text_input("Competitor 3 Label", value="Competitor C")
+
+st.divider()
+
+# -----------------------------
 # Product Quantity
 # -----------------------------
 num_products = st.number_input("📦 Number of products to enter", min_value=1, max_value=20, value=5)
@@ -57,9 +68,9 @@ for i in range(int(num_products)):
 
     cols = st.columns(5)
     your_price = cols[0].number_input("Your Price", 0.0, step=0.01, key=f"yp_{i}")
-    comp_a = cols[1].number_input("Competitor A", 0.0, step=0.01, key=f"a_{i}")
-    comp_b = cols[2].number_input("Competitor B", 0.0, step=0.01, key=f"b_{i}")
-    comp_c = cols[3].number_input("Competitor C", 0.0, step=0.01, key=f"c_{i}")
+    comp_a = cols[1].number_input(f"{comp1_name}", 0.0, step=0.01, key=f"a_{i}")
+    comp_b = cols[2].number_input(f"{comp2_name}", 0.0, step=0.01, key=f"b_{i}")
+    comp_c = cols[3].number_input(f"{comp3_name}", 0.0, step=0.01, key=f"c_{i}")
 
     lowest = min(comp_a, comp_b, comp_c) if any([comp_a, comp_b, comp_c]) else 0.0
     floor = round(your_price * (floor_percent / 100), 2)
@@ -79,9 +90,9 @@ for i in range(int(num_products)):
     ui_data.append({
         "Product": display_name,
         "Your Price": your_price,
-        "Competitor A": comp_a,
-        "Competitor B": comp_b,
-        "Competitor C": comp_c,
+        comp1_name: comp_a,
+        comp2_name: comp_b,
+        comp3_name: comp_c,
         "Lowest Competitor": lowest,
         "Suggested Price": suggested,
         "Price Floor (%)": f"{floor_percent}%",
@@ -92,9 +103,9 @@ for i in range(int(num_products)):
     export_data.append({
         "Product": name.strip() or f"Product {i+1}",
         "Your Price": your_price,
-        "Competitor A": comp_a,
-        "Competitor B": comp_b,
-        "Competitor C": comp_c,
+        comp1_name: comp_a,
+        comp2_name: comp_b,
+        comp3_name: comp_c,
         "Lowest Competitor": lowest,
         "Suggested Price": suggested,
         "Price Floor (%)": f"{floor_percent}%",
