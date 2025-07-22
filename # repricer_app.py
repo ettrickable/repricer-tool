@@ -3,15 +3,15 @@ import pandas as pd
 import io
 
 # -----------------------------
-# Streamlit Config & Intro
+# App Settings
 # -----------------------------
 st.set_page_config(page_title="Smart Repricing Tool", layout="wide")
-st.title("💰 Smart Repricing Tool (Custom Products + Excel Export)")
+st.title("💰 Smart Repricing Tool (with Excel Export)")
 
-st.markdown("Add your products below, set pricing rules, and track competitor pricing easily.")
+st.markdown("Set pricing logic, enter your products, compare to competitors, and download clean Excel reports.")
 
 # -----------------------------
-# Global Settings
+# Global Price Rules
 # -----------------------------
 col1, col2 = st.columns(2)
 undercut_amount = col1.number_input("💸 Undercut Amount ($)", min_value=0.0, value=1.00, step=0.10)
@@ -20,11 +20,11 @@ floor_percent = col2.slider("🛡️ Price Floor (% of your price)", min_value=5
 st.divider()
 
 # -----------------------------
-# Number of Products
+# Product Quantity
 # -----------------------------
-num_products = st.number_input("🛒 How many products would you like to enter?", min_value=1, max_value=20, value=5)
+num_products = st.number_input("📦 Number of products to enter", min_value=1, max_value=20, value=5)
 
-# Emoji options for picker
+# Emoji dropdown
 emoji_options = {
     "🛒 Default": "",
     "🖱️ Mouse": "🖱️",
@@ -40,31 +40,30 @@ emoji_options = {
 }
 
 # -----------------------------
-# Product Input Loop
+# Main Product Loop
 # -----------------------------
-updated_rows = []
-export_rows = []
+export_data = []
+ui_data = []
 
 for i in range(int(num_products)):
-    st.markdown("----")
-    cols_top = st.columns([2, 2, 1])
-    product_name_input = cols_top[0].text_input("Product Name", key=f"name_{i}")
-    emoji_choice = cols_top[1].selectbox("Choose Icon", list(emoji_options.keys()), key=f"emoji_{i}")
+    st.markdown("---")
+    top_cols = st.columns([2, 2, 1])
+    name = top_cols[0].text_input("Product Name", key=f"name_{i}")
+    emoji_choice = top_cols[1].selectbox("Icon", list(emoji_options.keys()), key=f"emoji_{i}")
     emoji = emoji_options[emoji_choice]
+    display_name = f"{emoji} {name.strip()}" if name.strip() else f"🆕 Product #{i+1}"
 
-    display_name = f"{emoji} {product_name_input.strip()}" if product_name_input.strip() else f"🆕 Product #{i+1}"
     st.subheader(display_name)
 
     cols = st.columns(5)
-    your_price = cols[0].number_input("Your Price", min_value=0.0, value=0.0, step=0.01, key=f"yp_{i}")
-    comp_a = cols[1].number_input("Competitor A", min_value=0.0, value=0.0, step=0.01, key=f"a_{i}")
-    comp_b = cols[2].number_input("Competitor B", min_value=0.0, value=0.0, step=0.01, key=f"b_{i}")
-    comp_c = cols[3].number_input("Competitor C", min_value=0.0, value=0.0, step=0.01, key=f"c_{i}")
+    your_price = cols[0].number_input("Your Price", 0.0, step=0.01, key=f"yp_{i}")
+    comp_a = cols[1].number_input("Competitor A", 0.0, step=0.01, key=f"a_{i}")
+    comp_b = cols[2].number_input("Competitor B", 0.0, step=0.01, key=f"b_{i}")
+    comp_c = cols[3].number_input("Competitor C", 0.0, step=0.01, key=f"c_{i}")
 
     lowest = min(comp_a, comp_b, comp_c) if any([comp_a, comp_b, comp_c]) else 0.0
     floor = round(your_price * (floor_percent / 100), 2)
     suggested = max(round(lowest - undercut_amount, 2), floor) if lowest > 0 else 0.0
-
     hit_floor = suggested == floor and suggested > 0
     icon = "🔒" if hit_floor else "💡"
     color = "red" if hit_floor else "lime"
@@ -77,8 +76,8 @@ for i in range(int(num_products)):
     </div>
     """, unsafe_allow_html=True)
 
-    updated_rows.append({
-        "Product": f"{emoji} {product_name_input.strip()}" if product_name_input.strip() else f"Product {i+1}",
+    ui_data.append({
+        "Product": display_name,
         "Your Price": your_price,
         "Competitor A": comp_a,
         "Competitor B": comp_b,
@@ -90,8 +89,8 @@ for i in range(int(num_products)):
         "Hit Floor": hit_floor
     })
 
-    export_rows.append({
-        "Product": product_name_input.strip() or f"Product {i+1}",
+    export_data.append({
+        "Product": name.strip() or f"Product {i+1}",
         "Your Price": your_price,
         "Competitor A": comp_a,
         "Competitor B": comp_b,
@@ -104,29 +103,26 @@ for i in range(int(num_products)):
     })
 
 # -----------------------------
-# Final Table Display
+# Final Table View
 # -----------------------------
-st.markdown("## 📋 Final Suggested Prices")
-result_df = pd.DataFrame(updated_rows)
-st.dataframe(result_df, use_container_width=True)
+st.markdown("## 📊 Final Suggested Prices")
+df_ui = pd.DataFrame(ui_data)
+st.dataframe(df_ui, use_container_width=True)
 
 # -----------------------------
-# Excel Export (.xlsx)
+# Excel Download (.xlsx)
 # -----------------------------
-excel_df = pd.DataFrame(export_rows)
+df_export = pd.DataFrame(export_data)
 output = io.BytesIO()
-
 with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-    excel_df.to_excel(writer, index=False, sheet_name="Prices")
-    workbook = writer.book
-    worksheet = writer.sheets["Prices"]
-    worksheet.set_column("A:A", 30)
-    worksheet.set_column("B:H", 18)
-
+    df_export.to_excel(writer, index=False, sheet_name="Repricing")
+    worksheet = writer.sheets["Repricing"]
+    worksheet.set_column("A:A", 30)  # Product column
+    worksheet.set_column("B:H", 18)  # Others
 data = output.getvalue()
 
 st.download_button(
-    label="📥 Download Excel (.xlsx)",
+    "📥 Download Excel (.xlsx)",
     data=data,
     file_name="repricing_suggestions.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
