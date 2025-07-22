@@ -25,7 +25,7 @@ st.markdown("Fine-tune your pricing logic below:")
 # -----------------------------
 col1, col2 = st.columns(2)
 undercut_amount = col1.number_input("💸 Undercut Amount ($)", min_value=0.0, value=1.00, step=0.10)
-floor_percent = col2.slider("🛡️ Price Floor (% of your price)", min_value=50, max_value=100, value=90)
+floor_percent = col2.slider("🛡️ Price Floor (% of your price you are happy to fall to)", min_value=50, max_value=100, value=90)
 
 st.divider()
 
