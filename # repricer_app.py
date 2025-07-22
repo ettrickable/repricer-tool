@@ -72,7 +72,16 @@ st.divider()
 num_competitors = st.slider("👥 Number of Competitors", 1, 5, value=st.session_state.get("num_competitors", 3), key="num_competitors")
 comp_cols = st.columns(num_competitors)
 default_names = [f"Competitor {chr(65+i)}" for i in range(num_competitors)]
-competitor_names = [comp_cols[i].text_input(f"Competitor {i+1} Name", value=(st.session_state.get("competitor_names", default_names))[i], key=f"comp_name_{i}") for i in range(num_competitors)]
+existing_names = st.session_state.get("competitor_names", default_names[:num_competitors])
+if len(existing_names) < num_competitors:
+    existing_names += default_names[len(existing_names):num_competitors]
+elif len(existing_names) > num_competitors:
+    existing_names = existing_names[:num_competitors]
+
+competitor_names = [
+    comp_cols[i].text_input(f"Competitor {i+1} Name", value=existing_names[i], key=f"comp_name_{i}")
+    for i in range(num_competitors)
+]
 st.session_state["competitor_names"] = competitor_names
 
 st.divider()
