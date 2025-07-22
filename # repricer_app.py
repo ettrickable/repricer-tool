@@ -111,7 +111,7 @@ result_df = pd.DataFrame(updated_rows)
 st.dataframe(result_df, use_container_width=True)
 
 # -----------------------------
-# Excel Export with xlsxwriter
+# Excel Export (.xlsx)
 # -----------------------------
 excel_df = pd.DataFrame(export_rows)
 output = io.BytesIO()
@@ -120,8 +120,8 @@ with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
     excel_df.to_excel(writer, index=False, sheet_name="Prices")
     workbook = writer.book
     worksheet = writer.sheets["Prices"]
-    worksheet.set_column("A:A", 30)  # Product
-    worksheet.set_column("B:H", 18)  # Other columns
+    worksheet.set_column("A:A", 30)
+    worksheet.set_column("B:H", 18)
 
 data = output.getvalue()
 
