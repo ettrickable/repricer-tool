@@ -4,13 +4,13 @@ import pandas as pd
 # -----------------------------
 # Streamlit Config & Intro
 # -----------------------------
-st.set_page_config(page_title="Repricing Tool", layout="wide")
-st.title("💰 Smart Repricing Tool (Custom Products Enabled)")
+st.set_page_config(page_title="Smart Repricing Tool", layout="wide")
+st.title("💰 Smart Repricing Tool (Custom Products + Emoji Picker)")
 
-st.markdown("Add your own products below and compare to your competitors.")
+st.markdown("Add your products below, set pricing rules, and track competitor pricing easily.")
 
 # -----------------------------
-# Global Pricing Logic Controls
+# Global Settings
 # -----------------------------
 col1, col2 = st.columns(2)
 undercut_amount = col1.number_input("💸 Undercut Amount ($)", min_value=0.0, value=1.00, step=0.10)
@@ -19,9 +19,24 @@ floor_percent = col2.slider("🛡️ Price Floor (% of your price)", min_value=5
 st.divider()
 
 # -----------------------------
-# How Many Products to Add?
+# Number of Products
 # -----------------------------
 num_products = st.number_input("🛒 How many products would you like to enter?", min_value=1, max_value=20, value=5)
+
+# Emoji options for picker
+emoji_options = {
+    "🛒 Default": "",
+    "🖱️ Mouse": "🖱️",
+    "🎧 Headphones": "🎧",
+    "💻 Laptop": "💻",
+    "🔊 Speaker": "🔊",
+    "📱 Phone": "📱",
+    "⌚ Watch": "⌚",
+    "🧲 USB Hub": "🧲",
+    "📷 Camera": "📷",
+    "🎮 Gaming": "🎮",
+    "🧼 Cleaning": "🧼"
+}
 
 # -----------------------------
 # Product Input Loop
@@ -29,14 +44,20 @@ num_products = st.number_input("🛒 How many products would you like to enter?"
 updated_rows = []
 
 for i in range(int(num_products)):
-    st.subheader(f"🆕 Product #{i+1}")
-    cols = st.columns(5)
+    st.markdown("----")
+    cols_top = st.columns([2, 2, 1])
+    product_name_input = cols_top[0].text_input("Product Name", key=f"name_{i}")
+    emoji_choice = cols_top[1].selectbox("Choose Icon", list(emoji_options.keys()), key=f"emoji_{i}")
+    emoji = emoji_options[emoji_choice]
 
-    product_name = cols[0].text_input("Product Name", key=f"name_{i}")
-    your_price = cols[1].number_input("Your Price", min_value=0.0, value=0.0, step=0.01, key=f"yp_{i}")
-    comp_a = cols[2].number_input("Competitor A", min_value=0.0, value=0.0, step=0.01, key=f"a_{i}")
-    comp_b = cols[3].number_input("Competitor B", min_value=0.0, value=0.0, step=0.01, key=f"b_{i}")
-    comp_c = cols[4].number_input("Competitor C", min_value=0.0, value=0.0, step=0.01, key=f"c_{i}")
+    display_name = f"{emoji} {product_name_input.strip()}" if product_name_input.strip() else f"🆕 Product #{i+1}"
+    st.subheader(display_name)
+
+    cols = st.columns(5)
+    your_price = cols[0].number_input("Your Price", min_value=0.0, value=0.0, step=0.01, key=f"yp_{i}")
+    comp_a = cols[1].number_input("Competitor A", min_value=0.0, value=0.0, step=0.01, key=f"a_{i}")
+    comp_b = cols[2].number_input("Competitor B", min_value=0.0, value=0.0, step=0.01, key=f"b_{i}")
+    comp_c = cols[3].number_input("Competitor C", min_value=0.0, value=0.0, step=0.01, key=f"c_{i}")
 
     lowest = min(comp_a, comp_b, comp_c) if any([comp_a, comp_b, comp_c]) else 0.0
     floor = round(your_price * (floor_percent / 100), 2)
@@ -46,7 +67,7 @@ for i in range(int(num_products)):
     icon = "🔒" if hit_floor else "💡"
     color = "red" if hit_floor else "lime"
 
-    st.markdown(f"""
+    cols[4].markdown(f"""
     <div style='line-height:1.3'>
         <span style='font-size: 18px;'>{icon} <strong>Suggested:</strong> 
         <span style='color:{color};'>${suggested:.2f}</span></span><br>
@@ -55,7 +76,7 @@ for i in range(int(num_products)):
     """, unsafe_allow_html=True)
 
     updated_rows.append({
-        "Product": product_name or f"Product {i+1}",
+        "Product": f"{emoji} {product_name_input.strip()}" if product_name_input.strip() else f"Product {i+1}",
         "Your Price": your_price,
         "Competitor A": comp_a,
         "Competitor B": comp_b,
@@ -70,8 +91,8 @@ for i in range(int(num_products)):
 # -----------------------------
 # Final Table Output
 # -----------------------------
-result_df = pd.DataFrame(updated_rows)
 st.markdown("## 📋 Final Suggested Prices")
+result_df = pd.DataFrame(updated_rows)
 st.dataframe(result_df, use_container_width=True)
 
 csv = result_df.to_csv(index=False).encode('utf-8')
